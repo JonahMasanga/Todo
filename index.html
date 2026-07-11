@@ -1,72 +1,567 @@
-Editor Preview Live Update Clear Copy Save No file chosen
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Page Title</title>
 <meta charset="UTF-8">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dispatch — Client Program Reminders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-@font-face { 
-  font-family: "Merriweather Sans";
-  src: url('MerriweatherSans-Medium.ttf') format('truetype');
-}
+  :root{
+    --paper:#F6F3EC;
+    --ink:#1B1A17;
+    --muted:#8A8377;
+    --line:#DCD6C8;
+    --teal:#2F6F62;
+    --teal-soft:#E4EEEA;
+    --amber:#D98A3D;
+    --amber-soft:#F8EADA;
+    --red:#C1432A;
+    --red-soft:#F6E1DB;
+    --card-bg:#FFFEFB;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:32px 20px 100px;}
 
-body {
-  background: #FFFFFF;
-  margin-bottom: 200px;
-}
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:18px;margin-bottom:28px;flex-wrap:wrap;gap:14px;
+  }
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .brand h1{
+    font-family:'Fraunces',serif;font-weight:700;font-size:34px;margin:0;
+    letter-spacing:-.01em;
+  }
+  .clock{
+    font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--muted);
+    text-align:right;
+  }
+  .clock b{color:var(--ink);}
 
-@keyframes BackgroundGradient {
-  0%{background-position:0% 50%;}
-  50%{background-position: 100% 50% }
-  100%{background-position: 0% 50%}
+  .actions-row{display:flex;gap:10px;margin-bottom:26px;flex-wrap:wrap;align-items:center;}
+  button{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
+    border:none;cursor:pointer;border-radius:3px;padding:10px 16px;
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(.97);}
+  .btn-primary{background:var(--ink);color:var(--paper);}
+  .btn-primary:hover{opacity:.85;}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink);}
+  .notif-status{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);
+    display:flex;align-items:center;gap:6px;margin-left:auto;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+  .dot.on{background:var(--teal);}
 
-}
+  section.group{margin-bottom:34px;}
+  .group-label{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .group-label::after{content:"";flex:1;height:1px;background:var(--line);}
 
-.VCE{
-  color: #f2f2f2;
-  background: linear-gradient(45deg, #FCE38A, #f5ad4d, #fd81b5, #f74689, #ad5af3, #8a13ef );
-  background-size: 450% 100%;
-  animation: BackgroundGradient 30s ease infinite;  
-  padding: 20px;
-  margin: 30px;
-  border-radius: 0.5rem;
-}
+  .empty{
+    border:1.5px dashed var(--line);border-radius:6px;padding:28px 20px;
+    text-align:center;color:var(--muted);font-size:14px;
+  }
 
-.VCE_Title{
-  font-family: "Merriweather Sans", sans-serif;
-  font-weight: 400;
-  font-size: 30px;
-  margin-bottom: 0;
-}
+  .card{
+    display:flex;align-items:center;gap:16px;
+    background:var(--card-bg);border:1.5px solid var(--line);border-radius:6px;
+    padding:14px 16px;margin-bottom:10px;
+    transition:border-color .3s ease, background .3s ease;
+  }
+  .card.status-warning{border-color:var(--amber);background:var(--amber-soft);}
+  .card.status-alarm{border-color:var(--red);background:var(--red-soft);animation:pulseCard 1s infinite;}
+  @keyframes pulseCard{0%,100%{box-shadow:0 0 0 0 rgba(193,67,42,.35);}50%{box-shadow:0 0 0 6px rgba(193,67,42,.12);}}
 
-.JTime{
-  font-family: "Merriweather Sans", sans-serif;
-  font-size: 20px;
-}
+  .ring{position:relative;width:56px;height:56px;flex:none;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring-track{fill:none;stroke:var(--line);stroke-width:4;}
+  .ring-fill{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s linear, stroke .3s;}
+  .ring-label{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:var(--ink);
+    text-align:center;line-height:1.1;
+  }
 
-button {
-  font-family: "Merriweather Sans", sans-serif;
-  font-size: 16px;
-  padding: 15px 22px;
-  border:3px #f2f2f2 solid;
-  border-radius:20px;
-  word-break: break-word;
-  white-space: normal;  
-}
+  .card-body{flex:1;min-width:0;}
+  .card-name{font-family:'Fraunces',serif;font-weight:600;font-size:18px;}
+  .card-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  .card-time{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);margin-top:4px;
+  }
+  .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 8px;border-radius:3px;
+    background:var(--teal-soft);color:var(--teal);white-space:nowrap;
+  }
+  .card.status-warning .badge{background:#fff;color:var(--amber);}
+  .card.status-alarm .badge{background:#fff;color:var(--red);}
 
+  .card-actions{display:flex;gap:6px;flex:none;}
+  .icon-btn{
+    background:transparent;border:1.5px solid var(--line);border-radius:4px;
+    padding:7px 10px;font-size:12px;color:var(--ink);
+  }
+  .icon-btn:hover{border-color:var(--ink);}
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(27,26,23,.55);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+  }
+  .modal{
+    background:var(--paper);border-radius:8px;max-width:440px;width:100%;
+    padding:26px 24px;border:1.5px solid var(--ink);
+  }
+  .modal h2{font-family:'Fraunces',serif;font-size:22px;margin:0 0 18px;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px;
+  }
+  .field input, .field textarea{
+    width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:4px;
+    font-family:'Inter',sans-serif;font-size:14px;background:#fff;color:var(--ink);
+  }
+  .field input:focus, .field textarea:focus{outline:none;border-color:var(--ink);}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+
+  /* Alarm full overlay */
+  .alarm-overlay{
+    position:fixed;inset:0;background:var(--red);color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:100;padding:24px;text-align:center;
+    animation:flashBg 1.2s infinite;
+  }
+  @keyframes flashBg{0%,100%{background:var(--red);}50%{background:#8f2f1c;}}
+  .alarm-eyebrow{font-family:'IBM Plex Mono',monospace;letter-spacing:.2em;text-transform:uppercase;font-size:13px;opacity:.85;}
+  .alarm-name{font-family:'Fraunces',serif;font-weight:700;font-size:44px;margin:10px 0 2px;}
+  .alarm-program{font-size:17px;opacity:.9;margin-bottom:26px;}
+  .alarm-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .alarm-buttons a, .alarm-buttons button{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
+    padding:12px 20px;border-radius:4px;text-decoration:none;border:none;cursor:pointer;
+  }
+  .alarm-call{background:#fff;color:var(--red);}
+  .alarm-snooze{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.5)!important;}
+  .alarm-done{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.5)!important;}
+
+  footer.note{
+    max-width:920px;margin:0 auto;padding:0 20px 40px;color:var(--muted);
+    font-size:12.5px;line-height:1.6;
+  }
 </style>
 </head>
 <body>
-<div class="VCE">
-<h2 class="VCE_Title">Visual Code Editor for HTML, CSS and JavaScript</h2>
-<hr style="border: 3px solid #f2f2f2;">
-<p class="JTime">Whatever code you write above, Live Preview will be visible here</p>
-<br>
-<button type="button" onclick="document.getElementById('Example').innerHTML = Date()">a Javascript Date and Time</button>
-<p class="JTime" id="Example"></p>
-<p class="JTime">Hit the "Clear" button and start typing Code.</p>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Dispatch</span>
+      <h1>Program reminders</h1>
+    </div>
+    <div class="clock" id="clock">—</div>
+  </header>
+
+  <div class="actions-row">
+    <button class="btn-primary" id="btn-add">+ New program</button>
+    <button class="btn-ghost" id="btn-notif">Enable notifications</button>
+    <div class="notif-status" id="notif-status"><span class="dot" id="notif-dot"></span><span id="notif-text">Notifications off</span></div>
+  </div>
+
+  <section class="group">
+    <div class="group-label">Firing now</div>
+    <div id="list-now"></div>
+  </section>
+
+  <section class="group">
+    <div class="group-label">Upcoming</div>
+    <div id="list-upcoming"></div>
+  </section>
+
+  <section class="group">
+    <div class="group-label">Completed</div>
+    <div id="list-done"></div>
+  </section>
 </div>
+
+<footer class="note">
+  Dispatch watches your schedule while this tab stays open: it pings a browser notification and chime 5 minutes before each program, then sounds a full alarm at start time with a one-tap call button. It can't place phone calls or send texts on its own — that needs a connected service like Twilio on a real server. Keep this tab open (or pinned) for reminders to fire.
+</footer>
+
+<div id="modal-root"></div>
+<div id="alarm-root"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'clients';
+  let clients = [];
+  let audioCtx = null;
+  let sirenInterval = null;
+  let activeAlarmId = null;
+  let notifEnabled = false;
+  let storageWorking = true; // flips to false permanently after first failure, so we stop retrying/logging
+
+  function showStorageNotice(){
+    if(document.getElementById('storage-notice')) return;
+    const div = document.createElement('div');
+    div.id = 'storage-notice';
+    div.style.cssText = 'max-width:920px;margin:0 auto 18px;padding:10px 14px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--ink);font-size:12.5px;border-radius:4px;';
+    div.textContent = "This session can't save to persistent storage right now, so programs will stay in memory for this tab session but won't survive a page reload.";
+    const wrap = document.querySelector('.wrap');
+    wrap.insertBefore(div, wrap.firstChild.nextSibling);
+  }
+
+  // ---------- storage ----------
+  async function loadClients(){
+    try{
+      if(!window.storage) throw new Error('no storage api');
+      const res = await window.storage.get(STORAGE_KEY, false);
+      clients = res ? JSON.parse(res.value) : [];
+    }catch(e){
+      clients = [];
+    }
+    render();
+  }
+  async function saveClients(){
+    if(!storageWorking) return; // already known broken, skip silently
+    try{
+      if(!window.storage) throw new Error('no storage api');
+      await window.storage.set(STORAGE_KEY, JSON.stringify(clients), false);
+    }catch(e){
+      storageWorking = false;
+      showStorageNotice();
+    }
+  }
+
+  function uid(){ return 'c' + Math.random().toString(36).slice(2,10); }
+
+  // ---------- audio ----------
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function beep(freq, duration, delay){
+    const ctx = ensureAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.value = 0.0001;
+    osc.connect(gain); gain.connect(ctx.destination);
+    const t0 = ctx.currentTime + (delay||0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.3, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+duration);
+    osc.start(t0);
+    osc.stop(t0+duration+0.05);
+  }
+  function chime(){ beep(880,0.18,0); beep(1180,0.22,0.2); }
+  function startSiren(){
+    if(sirenInterval) return;
+    let high = true;
+    sirenInterval = setInterval(()=>{
+      beep(high?1000:700, 0.35, 0);
+      high = !high;
+    }, 380);
+  }
+  function stopSiren(){
+    if(sirenInterval){ clearInterval(sirenInterval); sirenInterval = null; }
+  }
+
+  // ---------- notifications ----------
+  function updateNotifUI(){
+    const dot = document.getElementById('notif-dot');
+    const text = document.getElementById('notif-text');
+    const btn = document.getElementById('btn-notif');
+    if(notifEnabled){
+      dot.classList.add('on'); text.textContent = 'Notifications on'; btn.style.display='none';
+    } else {
+      dot.classList.remove('on'); text.textContent = 'Notifications off'; btn.style.display='inline-block';
+    }
+  }
+  document.getElementById('btn-notif').addEventListener('click', async ()=>{
+    if(!('Notification' in window)){ alert('This browser does not support notifications.'); return; }
+    const perm = await Notification.requestPermission();
+    notifEnabled = perm === 'granted';
+    updateNotifUI();
+  });
+  function notify(title, body){
+    chime();
+    if(notifEnabled && 'Notification' in window){
+      try{ new Notification(title, {body}); }catch(e){}
+    }
+  }
+
+  // ---------- time helpers ----------
+  function fmtClock(d){
+    return d.toLocaleString(undefined, {weekday:'short', hour:'2-digit', minute:'2-digit', month:'short', day:'numeric'});
+  }
+  function fmtWhen(iso){
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  }
+  function secondsUntil(iso){
+    return Math.round((new Date(iso).getTime() - Date.now())/1000);
+  }
+  function fmtCountdown(sec){
+    const s = Math.max(0, sec);
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = s%60;
+    if(h>0) return `${h}h ${m}m`;
+    if(m>0) return `${m}m ${ss}s`;
+    return `${ss}s`;
+  }
+
+  function statusFor(c){
+    if(c.done) return 'done';
+    const sec = secondsUntil(c.datetime);
+    if(sec <= 0) return 'alarm';
+    if(sec <= 300) return 'warning';
+    return 'scheduled';
+  }
+
+  // ---------- ring ----------
+  function ringSVG(c, status){
+    const sec = secondsUntil(c.datetime);
+    const window_ = 30*60;
+    let pct = 0;
+    if(sec <= 0) pct = 1;
+    else if(sec < window_) pct = 1 - (sec/window_);
+    const r = 24, circ = 2*Math.PI*r;
+    const offset = circ * (1-pct);
+    let color = 'var(--teal)';
+    if(status==='warning') color = 'var(--amber)';
+    if(status==='alarm') color = 'var(--red)';
+    const label = status==='alarm' ? 'NOW' : fmtCountdownShort(sec);
+    return `
+      <div class="ring">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle class="ring-track" cx="28" cy="28" r="${r}"></circle>
+          <circle class="ring-fill" cx="28" cy="28" r="${r}"
+            stroke="${color}"
+            stroke-dasharray="${circ}"
+            stroke-dashoffset="${offset}"></circle>
+        </svg>
+        <div class="ring-label">${label}</div>
+      </div>`;
+  }
+  function fmtCountdownShort(sec){
+    const s = Math.max(0,sec);
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    if(h>0) return h+'h';
+    if(m>0) return m+'m';
+    return s+'s';
+  }
+
+  // ---------- render ----------
+  function render(){
+    const now = [], upcoming = [], done = [];
+    clients.forEach(c=>{
+      const st = statusFor(c);
+      if(st==='done') done.push(c);
+      else if(st==='alarm') now.push(c);
+      else upcoming.push(c);
+    });
+    upcoming.sort((a,b)=> new Date(a.datetime)-new Date(b.datetime));
+    now.sort((a,b)=> new Date(a.datetime)-new Date(b.datetime));
+    done.sort((a,b)=> new Date(b.datetime)-new Date(a.datetime));
+
+    renderList('list-now', now, 'alarm');
+    renderList('list-upcoming', upcoming, null);
+    renderList('list-done', done, 'done');
+  }
+
+  function renderList(elId, items, forceStatus){
+    const el = document.getElementById(elId);
+    if(items.length===0){
+      el.innerHTML = `<div class="empty">${elId==='list-now' ? 'Nothing firing right now.' : elId==='list-done' ? 'No completed programs yet.' : 'No upcoming programs. Add one to get started.'}</div>`;
+      return;
+    }
+    el.innerHTML = items.map(c=>{
+      const status = forceStatus || statusFor(c);
+      const badgeText = status==='alarm' ? 'Now' : status==='warning' ? '5-min warning' : status==='done' ? 'Done' : 'Scheduled';
+      const ring = status==='done' ? '' : ringSVG(c, status);
+      return `
+      <div class="card status-${status}" data-id="${c.id}">
+        ${ring || `<div class="ring"><div class="ring-label" style="position:static;">✓</div></div>`}
+        <div class="card-body">
+          <div class="card-name">${escapeHtml(c.name)}</div>
+          <div class="card-meta">${escapeHtml(c.program)}${c.phone ? ' · '+escapeHtml(c.phone) : ''}</div>
+          <div class="card-time">${fmtWhen(c.datetime)}</div>
+        </div>
+        <span class="badge">${badgeText}</span>
+        <div class="card-actions">
+          ${status!=='done' ? `<button class="icon-btn" data-action="edit" data-id="${c.id}">Edit</button>` : ''}
+          <button class="icon-btn" data-action="delete" data-id="${c.id}">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    if(btn.dataset.action === 'delete'){
+      clients = clients.filter(c=>c.id!==id);
+      saveClients(); render();
+    } else if(btn.dataset.action === 'edit'){
+      openModal(clients.find(c=>c.id===id));
+    }
+  });
+
+  // ---------- modal (add/edit) ----------
+  function openModal(existing){
+    const isEdit = !!existing;
+    const c = existing || {id:uid(), name:'', phone:'', program:'', datetime:'', notes:''};
+    let localDT = '';
+    if(c.datetime){
+      const d = new Date(c.datetime);
+      const pad = n=>String(n).padStart(2,'0');
+      localDT = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    const root = document.getElementById('modal-root');
+    root.innerHTML = `
+      <div class="overlay" id="modal-overlay">
+        <div class="modal">
+          <h2>${isEdit ? 'Edit program' : 'New program'}</h2>
+          <div class="field"><label>Title / purpose</label><input id="f-name" value="${escapeHtml(c.name)}" placeholder="Jordan Alvarez — check-in call"></div>
+          <div class="field"><label>Phone (for one-tap call)</label><input id="f-phone" value="${escapeHtml(c.phone)}" placeholder="+1 555 123 4567"></div>
+          <div class="field"><label>Program / session</label><input id="f-program" value="${escapeHtml(c.program)}" placeholder="Strength coaching — session 4"></div>
+          <div class="field"><label>Date & time</label><input id="f-datetime" type="datetime-local" value="${localDT}"></div>
+          <div class="field"><label>Notes (optional)</label><textarea id="f-notes" rows="2" placeholder="Anything to remember">${escapeHtml(c.notes||'')}</textarea></div>
+          <div class="modal-actions">
+            <button class="btn-ghost" id="modal-cancel">Cancel</button>
+            <button class="btn-primary" id="modal-save">${isEdit ? 'Save changes' : 'Add program'}</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('modal-cancel').onclick = ()=> root.innerHTML='';
+    document.getElementById('modal-overlay').addEventListener('click', (e)=>{
+      if(e.target.id === 'modal-overlay') root.innerHTML='';
+    });
+    document.getElementById('modal-save').onclick = ()=>{
+      const name = document.getElementById('f-name').value.trim();
+      const dtVal = document.getElementById('f-datetime').value;
+      if(!name || !dtVal){ alert('Please add a client name and a date & time.'); return; }
+      const updated = {
+        id: c.id,
+        name,
+        phone: document.getElementById('f-phone').value.trim(),
+        program: document.getElementById('f-program').value.trim() || 'Program',
+        datetime: new Date(dtVal).toISOString(),
+        notes: document.getElementById('f-notes').value.trim(),
+        fired5: false, firedNow: false, done: false
+      };
+      const idx = clients.findIndex(x=>x.id===c.id);
+      if(idx>=0){
+        // preserve fired flags if datetime unchanged
+        if(clients[idx].datetime === updated.datetime){
+          updated.fired5 = clients[idx].fired5;
+          updated.firedNow = clients[idx].firedNow;
+          updated.done = clients[idx].done;
+        }
+        clients[idx] = updated;
+      } else {
+        clients.push(updated);
+      }
+      saveClients(); render(); root.innerHTML='';
+    };
+  }
+  document.getElementById('btn-add').addEventListener('click', ()=> openModal(null));
+
+  // ---------- alarm overlay ----------
+  function showAlarm(c){
+    activeAlarmId = c.id;
+    startSiren();
+    const root = document.getElementById('alarm-root');
+    root.innerHTML = `
+      <div class="alarm-overlay">
+        <div class="alarm-eyebrow">Program starting now</div>
+        <div class="alarm-name">${escapeHtml(c.name)}</div>
+        <div class="alarm-program">${escapeHtml(c.program)}</div>
+        <div class="alarm-buttons">
+          ${c.phone ? `<a class="alarm-call" href="tel:${escapeHtml(c.phone)}">Call now</a>` : ''}
+          <button class="alarm-snooze" id="alarm-snooze">Snooze 5 min</button>
+          <button class="alarm-done" id="alarm-done">Mark done</button>
+        </div>
+      </div>`;
+    document.getElementById('alarm-snooze').onclick = ()=>{
+      const idx = clients.findIndex(x=>x.id===c.id);
+      if(idx>=0){
+        const d = new Date(clients[idx].datetime);
+        d.setMinutes(d.getMinutes()+5);
+        clients[idx].datetime = d.toISOString();
+        clients[idx].fired5 = false;
+        clients[idx].firedNow = false;
+      }
+      closeAlarm(); saveClients(); render();
+    };
+    document.getElementById('alarm-done').onclick = ()=>{
+      const idx = clients.findIndex(x=>x.id===c.id);
+      if(idx>=0) clients[idx].done = true;
+      closeAlarm(); saveClients(); render();
+    };
+  }
+  function closeAlarm(){
+    stopSiren();
+    activeAlarmId = null;
+    document.getElementById('alarm-root').innerHTML='';
+  }
+
+  // ---------- tick loop ----------
+  function tick(){
+    document.getElementById('clock').innerHTML = `<b>${fmtClock(new Date())}</b>`;
+    let changed = false;
+    clients.forEach(c=>{
+      if(c.done) return;
+      const sec = secondsUntil(c.datetime);
+      if(sec <= 300 && sec > 0 && !c.fired5){
+        c.fired5 = true; changed = true;
+        notify('In 5 minutes: ' + c.program, c.name + ' — starting soon');
+      }
+      if(sec <= 0 && !c.firedNow){
+        c.firedNow = true; changed = true;
+        notify('Starting now: ' + c.program, c.name);
+        showAlarm(c);
+      }
+    });
+    if(changed) saveClients();
+    render();
+  }
+
+  updateNotifUI();
+  loadClients().then(()=>{
+    tick();
+    setInterval(tick, 1000);
+  });
+})();
+</script>
 </body>
 </html>
-
